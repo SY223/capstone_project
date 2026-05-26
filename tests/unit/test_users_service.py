@@ -1,6 +1,6 @@
 from app.services.user_services import UserService
 from app.schemas.user_schema import UserCreate, UserResponse, UserUpdate
-from app.core.db import users_db
+from app.core.db_async import users_db
 from uuid import uuid4
 from datetime import datetime, timezone
 import pytest

@@ -5,8 +5,8 @@ from app.main import app
 from app.schemas.course_schema import CourseResponse
 from app.schemas.user_schema import UserResponse
 from app.services.enrollment_services import EnrollmentService
-from app.core.db import courses_db, users_db, enrollments_db
-from app.api.deps import is_admin_user
+from app.core.db_async import courses_db, users_db, enrollments_db
+from app.core.deps import is_admin_user
 import pytest
 
 client = TestClient(app)

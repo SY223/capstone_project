@@ -1,12 +1,14 @@
-from pydantic import BaseModel, field_validator
+from pydantic import BaseModel, ConfigDict, field_validator
 from datetime import datetime
 from typing import Optional
 from uuid import UUID
 import re
 
 class CourseBase(BaseModel):
-    code: str
     title: str
+    code: str
+    capacity: int
+    is_active: bool = True
 
     @field_validator("code") 
     def validate_course_code(cls, value):
@@ -18,21 +20,23 @@ class CourseBase(BaseModel):
         return value.upper()
 
 class CourseCreate(CourseBase):
-    pass
+    owner_id: UUID
 
 class CourseResponse(CourseBase):
     id: UUID
+    owner_id: UUID
     created_at: datetime
     updated_at: Optional[datetime] = None
+    model_config = ConfigDict(from_attributes=True)
     
-    @field_validator("title") 
-    def normalize_name(cls, value): 
-        return value.strip().lower()
 
 class CourseUpdate(BaseModel):
     title: Optional[str] = None
     code: Optional[str] = None
+    capacity: Optional[int] = None
+    is_active: Optional[bool] = None
+    owner_id: Optional[UUID] = None
 
     @field_validator("title") 
-    def normalize_name(cls, value): 
+    def normalize_title(cls, value): 
         return value.strip().lower()

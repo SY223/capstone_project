@@ -1,3 +1,4 @@
+from typing import Optional
 from pydantic import BaseModel
 from app.schemas.user_schema import UserResponse
 from app.schemas.course_schema import CourseResponse
@@ -11,12 +12,16 @@ class EnrollmentBase(BaseModel):
 class EnrollmentCreate(EnrollmentBase):
     pass
 
-class EnrollmentRequest(BaseModel):
-    course_id: UUID
+# class EnrollmentRequest(BaseModel):
+#     course_id: UUID
 
 class EnrollmentResponse(EnrollmentBase):
     id: UUID
-    enrolled_on: datetime
+    created_at: datetime
+
+class EnrollmentUpdate(BaseModel):
+    user_id: Optional[UUID] = None
+    course_id: Optional[UUID] = None
 
 class EnrollmentDetails(BaseModel):
     id: UUID

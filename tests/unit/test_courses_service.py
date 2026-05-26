@@ -1,5 +1,5 @@
 from app.services.course_services import CourseService
-from app.core.db import courses_db, users_db, enrollments_db
+from app.core.db_async import courses_db, users_db, enrollments_db
 from app.schemas.course_schema import CourseCreate, CourseResponse, CourseUpdate
 from datetime import datetime, timezone
 from uuid import uuid4, UUID

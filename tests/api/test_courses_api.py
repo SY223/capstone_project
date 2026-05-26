@@ -3,8 +3,8 @@ from uuid import uuid4
 from datetime import datetime, timezone 
 from app.main import app 
 from app.schemas.course_schema import CourseResponse 
-from app.core.db import courses_db, users_db
-from app.api.deps import is_admin_user
+from app.core.db_async import courses_db, users_db
+from app.core.deps import is_admin_user
 import pytest
 
 client = TestClient(app)
