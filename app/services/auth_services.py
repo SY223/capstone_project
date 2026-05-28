@@ -107,13 +107,13 @@ class AuthService:
         #Details that goes to client
         subject = "Your Password Reset Code"
         body = (
-            f"Hello {user.full_name},\n\n"
+            f"Hello {user.full_name.title()},\n\n"
             f"Your password reset code is: {code}\n\n"
             f"This code will expire in 15 minutes.\n\n"
             f"If you did not request this, please ignore this email.\n\n"
             f"Regards,\nYour App Team"
         )
-        # await send_email_postmark_async(user.email, subject, body)
+        await send_email_postmark_async(user.email, subject, body)
 
         return {
             "message": "if this email exists, a reset code has been sent."
@@ -147,5 +147,5 @@ class AuthService:
         await AuthRepository.clear_reset_code(db, user)
         await db.commit()
         return {
-            "message": "Password has been reset successfully"
+            "message": "Password reset successfull"
         }

@@ -5,7 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.deps import get_async_db, auth_get_current_user, auth_require_admin
 from app.services.auth_services import AuthService
 from app.services.user_services import UserService
-from app.schemas.user_schema import UserCreate
+from app.schemas.user_schema import UserCreate, UserResponse
 from app.schemas.auth_schema import RefreshTokenSchema, LogoutSchema, PasswordResetConfirmSchema, PasswordResetRequestSchema
 
 auth_router = APIRouter()
@@ -27,6 +27,12 @@ async def login(
         email=form_data.username,
         password=form_data.password
     )
+#GET Current user
+@auth_router.post("/me")
+async def get_current_user(
+    current_user = Depends(auth_get_current_user)
+):
+    return UserResponse.model_validate(current_user)
 
 @auth_router.post("/refresh")
 async def refresh_token(

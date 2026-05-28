@@ -16,7 +16,7 @@ class UserBase(BaseModel):
     role: str
 
 class UserCreate(UserBase):
-    hashed_password: str
+    password: str
 
     @field_validator("full_name") 
     def normalize_name(cls, value): 

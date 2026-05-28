@@ -7,8 +7,6 @@ import re
 class CourseBase(BaseModel):
     title: str
     code: str
-    capacity: int
-    is_active: bool = True
 
     @field_validator("code") 
     def validate_course_code(cls, value):
@@ -18,17 +16,31 @@ class CourseBase(BaseModel):
         if not re.match(pattern, value): 
             raise ValueError("Course code not right") 
         return value.upper()
+    
+    @field_validator("title") 
+    def normalize_title(cls, value): 
+        return value.strip().lower()
 
 class CourseCreate(CourseBase):
-    owner_id: UUID
+    pass
 
 class CourseResponse(CourseBase):
     id: UUID
     owner_id: UUID
+    capacity: int
+    is_active: bool = True
     created_at: datetime
     updated_at: Optional[datetime] = None
     model_config = ConfigDict(from_attributes=True)
-    
+
+
+class CoursePut(BaseModel):
+    title: str
+    code: str
+
+class CoursePatch(BaseModel):
+    title: Optional[str] = None
+    code: Optional[str] = None
 
 class CourseUpdate(BaseModel):
     title: Optional[str] = None

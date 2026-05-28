@@ -1,74 +1,92 @@
-# from fastapi import APIRouter, HTTPException, Depends, status
-# from uuid import uuid4, UUID
-# from app.services.course_services import CourseService
-# from app.schemas.course_schema import CourseCreate, CourseUpdate
-# from app.core.deps import is_admin_user
-# from typing import List
+from fastapi import APIRouter, Depends
+from sqlalchemy.ext.asyncio import AsyncSession
+from uuid import UUID
+
+from app.core.deps import get_async_db
+from app.schemas.pagination import PaginatedResult
+from app.services.course_services import CourseService
+from app.schemas.course_schema import CourseCreate, CoursePut, CoursePatch, CourseResponse
+from app.core.deps import auth_get_current_user
 
 
-# course_router = APIRouter()
+course_router = APIRouter()
 
-# #Admin create courses
-# @course_router.post("/", status_code=status.HTTP_201_CREATED)
-# def create_course(
-#     course_in: CourseCreate,
-#     admin_user = Depends(is_admin_user)
-# ):
-#     try:
-#         return CourseService.create_course(course_in)
-#     except ValueError as exc:
-#         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc))
+# Teacher create courses
+@course_router.post("/")
+async def create_course(
+    data: CourseCreate,
+    db: AsyncSession = Depends(get_async_db),
+    current_user = Depends(auth_get_current_user)
+):
+    return await CourseService.create_course(db, data, current_user)
 
-# #Retrieve all courses
-# @course_router.get("/", status_code=status.HTTP_200_OK)
-# def get_all_courses():
-#     try:
-#         return CourseService.get_all_courses()
-#     except ValueError as exc:
-#         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc))
-#     except Exception:
-#         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="An unexpected error occurred")
+# Teacher, Admin, Student Retrieve all active courses
+@course_router.get("/", response_model=PaginatedResult[CourseResponse])
+async def list_courses(
+    db: AsyncSession = Depends(get_async_db),
+    current_user = Depends(auth_get_current_user)
+):
+    return await CourseService.list_all_courses(db, current_user)
 
-# #Retrieve a course by unique id
-# @course_router.get("/{course_id}", status_code=status.HTTP_200_OK)
-# def get_course(course_id: UUID):
-#     try:
-#         return CourseService.get_course(course_id)
-#     except ValueError as exc:
-#         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc))
+#Admin retrieve all courses with inactive courses
+@course_router.get("/admin/all", response_model=PaginatedResult[CourseResponse])
+async def admin_list_all_courses(
+    skip: int = 0,
+    limit: int = 10,
+    db: AsyncSession = Depends(get_async_db),
+    current_user = Depends(auth_get_current_user)
+):
+    return await CourseService.admin_list_all_courses(
+        db=db,
+        current_user=current_user,
+        skip=skip,
+        limit=limit
+    )
 
-# #Admin fully replace course: PUT
-# @course_router.put("/{course_id}", status_code=status.HTTP_200_OK)
-# def replace_course(
-#     course_id: UUID,
-#     course_update: CourseCreate,
-#     admin_user = Depends(is_admin_user)
-# ):
-#     try:
-#         updated_course = CourseService.replace_course(course_id, course_update)
-#         return updated_course
-#     except ValueError as exc:
-#         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc))
-#     except Exception:
-#         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="An unexpected error occurred")
+#Teacher fully replace active courses: PUT
+@course_router.put("/{course_id}", response_model=CourseResponse)
+async def replace_course(
+    course_id: UUID,
+    data: CoursePut,
+    db: AsyncSession = Depends(get_async_db),
+    current_user = Depends(auth_get_current_user)
+):
+    return await CourseService.update_course(db, course_id, data, current_user)
+
     
-# #Admin Partially update course: PATCH
-# @course_router.patch("/{course_id}")
-# def partial_update_course(course_id: UUID, course_update: CourseUpdate, admin_user = Depends(is_admin_user)):
-#     try:
-#         return CourseService.partial_update_course(course_id, course_update)
-#     except ValueError as exc:
-#         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc))
+# Teacher Partially update active courses: PATCH
+@course_router.patch("/{course_id}", response_model=CourseResponse)
+async def patch_course(
+    course_id: UUID,
+    data: CoursePatch,
+    db: AsyncSession = Depends(get_async_db),
+    current_user = Depends(auth_get_current_user)
+):
+    return await CourseService.update_course(db, course_id, data, current_user)
 
-# #Admin delete course
-# @course_router.delete("/{course_id}", status_code=status.HTTP_204_NO_CONTENT)
-# def delete_course(
-#     course_id: UUID,
-#     admin_user = Depends(is_admin_user)
-# ):
-#     try:
-#         CourseService.delete_course(course_id)
-#     except ValueError as exc:
-#         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc))
-#     except Exception:
-#         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="An unexpected error occurred")
+#Admin delete course
+@course_router.delete("/{course_id}")
+async def delete_course(
+    course_id: UUID,
+    db: AsyncSession = Depends(get_async_db),
+    current_user = Depends(auth_get_current_user)
+):
+    return await CourseService.delete_course(db, course_id, current_user)
+
+#Admin deactivate course
+@course_router.patch("/{course_id}/deactivate")
+async def deactivate_course(
+    course_id: UUID,
+    db: AsyncSession = Depends(get_async_db),
+    current_user = Depends(auth_get_current_user)
+):
+    return await CourseService.deactivate_course(db, course_id, current_user)
+
+#Admin Reactivate Course
+@course_router.patch("/{course_id}/reactivate")
+async def reactivate_course(
+    course_id: UUID,
+    db: AsyncSession = Depends(get_async_db),
+    current_user = Depends(auth_get_current_user)
+):
+    return await CourseService.reactivate_course(db, course_id, current_user)

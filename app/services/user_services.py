@@ -24,7 +24,7 @@ class UserService:
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Invalid role. Allowed roles: student, teacher, admin"
             )
-        if len(data.hashed_password) < 8:
+        if len(data.password) < 8:
             raise HTTPException(
                 status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
                 detail="Password must be at least 8 characters long."
@@ -33,7 +33,7 @@ class UserService:
         user = User(
             full_name=data.full_name,
             email=data.email,
-            hashed_password=hash_password(data.hashed_password),
+            hashed_password=hash_password(data.password),
             role=data.role,
             is_active=True
         )

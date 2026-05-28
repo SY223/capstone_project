@@ -1,5 +1,5 @@
 from typing import Optional
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 from app.schemas.user_schema import UserResponse
 from app.schemas.course_schema import CourseResponse
 from uuid import UUID
@@ -10,14 +10,12 @@ class EnrollmentBase(BaseModel):
     course_id: UUID
 
 class EnrollmentCreate(EnrollmentBase):
-    pass
-
-# class EnrollmentRequest(BaseModel):
-#     course_id: UUID
+    course_id: UUID
 
 class EnrollmentResponse(EnrollmentBase):
     id: UUID
     created_at: datetime
+    model_config = ConfigDict(from_attributes=True)
 
 class EnrollmentUpdate(BaseModel):
     user_id: Optional[UUID] = None
@@ -25,7 +23,28 @@ class EnrollmentUpdate(BaseModel):
 
 class EnrollmentDetails(BaseModel):
     id: UUID
-    student: UserResponse
-    course: CourseResponse
+    course_id: UUID
+    title: str
+    code: str
+    enrolled_on: datetime
+    model_config = ConfigDict(from_attributes=True)
+
+class EnrollmentAdminDetails(BaseModel):
+    id: UUID
+    student_id: UUID
+    student_email: str
+    course_id: UUID
+    course_title: str
+    course_code: str
     enrolled_on: datetime
 
+    model_config = ConfigDict(from_attributes=True)
+
+class TeacherCourseEnrollmentSummary(BaseModel):
+    course_id: UUID
+    title: str
+    code: str
+    capacity_left: int
+    total_enrolled: int
+
+    model_config = ConfigDict(from_attributes=True)
