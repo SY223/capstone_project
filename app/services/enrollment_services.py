@@ -171,7 +171,6 @@ class EnrollmentService:
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="You cannot unenroll another user"
             )
-
         course = enrollment.course
         if not course.is_active:
             raise HTTPException(
@@ -184,4 +183,40 @@ class EnrollmentService:
         await db.refresh(course)
         return {
             "message": f"You have successfully deregister from {course.title.title()}"
+        }
+    
+    #ADMIN remove student from course
+    @staticmethod
+    async def admin_remove_student_from_course(
+        db: AsyncSession,
+        enrollment_id: UUID,
+        current_user
+    ):
+        if current_user.role != UserRole.admin:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Only admin can remove student from a course"
+            )
+        enrollment = await EnrollmentRepository.get_enrollment_by_id(db, enrollment_id)
+        if not enrollment:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Enrollment not found"
+            )
+        course = enrollment.course
+        if not course:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Course not found"
+            )
+        await EnrollmentRepository.delete(db, enrollment)
+        course.capacity += 1
+        await db.commit()
+        await db.refresh(course)
+
+        return {
+            "message": "Student removed from course successfully",
+            "course_id": course.id,
+            "student_id": enrollment.user_id,
+            "capacity_left": course.capacity
         }

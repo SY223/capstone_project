@@ -3,6 +3,7 @@ from fastapi import HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import Union
 from uuid import UUID
+from app.core.cache import cache_get, cache_set, cache_delete_pattern
 from app.repositories.course_repository import CourseRepository
 from app.schemas.course_schema import CourseCreate, CourseUpdate, CourseResponse, CoursePut, CoursePatch
 from app.schemas.pagination import PaginatedResult
@@ -33,6 +34,7 @@ class CourseService:
         course = await CourseRepository.create(db, course_dict)
         await db.commit()
         await db.refresh(course)
+        await cache_delete_pattern("courses:*")
         return CourseResponse.model_validate(course)
 
     @staticmethod
@@ -57,16 +59,36 @@ class CourseService:
     ):
         if current_user.role not in (UserRole.admin, UserRole.teacher, UserRole.student):
             raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not authorised to list all courses")
+        cache_key = f"courses:{skip}:{limit}"
+        cached = await cache_get(cache_key)
+        if cached:
+            return PaginatedResult[CourseResponse](
+                total=cached["total"],
+                skip=cached["skip"],
+                limit=cached["limit"],
+                items=[CourseResponse(**item) for item in cached["items"]]
+            )
         courses = await CourseRepository.list_all(db, skip, limit)
         if courses["total"] == 0:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No active courses in database")
+        items = [
+            CourseResponse.model_validate(c).model_dump(mode="json")
+            for c in courses["items"]
+        ]
+        result_dict = {
+            "total": courses["total"],
+            "skip": skip,
+            "limit": limit,
+            "items": items
+        }
+        await cache_set(cache_key, result_dict, ttl=300)
         return PaginatedResult[CourseResponse](
             total=courses["total"],
             skip=skip,
             limit=limit,
-            items=[CourseResponse.model_validate(c) for c in courses["items"]]
+            items=[CourseResponse(**item) for item in items]
         )
-
+        
     
     @staticmethod
     async def admin_list_all_courses(

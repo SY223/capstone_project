@@ -33,3 +33,12 @@ async def send_email_postmark_async(to_email: str, subject: str, body: str):
             TextBody=body
         )
     await asyncio.to_thread(_send)
+    
+def send_email_postmark_sync(to_email: str, subject: str, body: str):
+    try:
+        loop = asyncio.get_running_loop()
+    except RuntimeError:
+        loop = None
+    if loop and loop.is_running():
+        asyncio.ensure_future(send_email_postmark_async(to_email, subject, body))
+    asyncio.run(send_email_postmark_async(to_email, subject, body))

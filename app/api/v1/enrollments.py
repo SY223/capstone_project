@@ -8,6 +8,7 @@ from app.services.enrollment_services import EnrollmentService
 
 enrollment_router = APIRouter()
 
+#STUDENT enroll on a course
 @enrollment_router.post("/")
 async def enroll_student(
     data: EnrollmentCreate,
@@ -16,6 +17,7 @@ async def enroll_student(
 ):
     return await EnrollmentService.enroll_student(db, data, current_user)
 
+#STUDENT GET their enrollment lists
 @enrollment_router.get("/me")
 async def get_my_enrollments(
     db: AsyncSession = Depends(get_async_db),
@@ -48,29 +50,11 @@ async def unenroll_student_from_course(
 ):
     return await EnrollmentService.unenroll_student(db,enrollment_id, current_user)
 
-
-
-
-
-# #Admin retrieve course enrollments
-# @enrollment_router.get("/admin/{course_id}/enrollments", response_model=List[EnrollmentDetails], status_code=status.HTTP_200_OK)
-# def admin_retrieve_course_enrollments(
-#     course_id: UUID,
-#     admin_id: UUID = Depends(is_admin_user)
-#     ):
-#     try:
-#         return EnrollmentService.admin_retrieve_course_enrollments(course_id)
-#     except Exception as exc:
-#         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(exc))
-
-# #Admin remove enrollments
-# @enrollment_router.delete("/admin/force-deregister")
-# def admin_force_deregister(
-#     user_id: UUID,
-#     course_id: UUID,
-#     admin_id: UUID = Depends(is_admin_user)
-#     ):
-#     try:
-#         return EnrollmentService.admin_force_deregister(user_id, course_id)
-#     except Exception as exc:
-#         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(exc))
+#ADMIN remove student from course
+@enrollment_router.delete("/admin/remove/{enrollment_id}")
+async def admin_remove_student_from_course(
+    enrollment_id: UUID,
+    db: AsyncSession = Depends(get_async_db),
+    current_user = Depends(auth_get_current_user)
+):
+    return await EnrollmentService.admin_remove_student_from_course(db, enrollment_id, current_user)

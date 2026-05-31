@@ -27,6 +27,7 @@ class EnrollmentDetails(BaseModel):
     title: str
     code: str
     enrolled_on: datetime
+    
     model_config = ConfigDict(from_attributes=True)
 
 class EnrollmentAdminDetails(BaseModel):

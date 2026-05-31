@@ -1,12 +1,12 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.deps import get_async_db, auth_get_current_user, auth_require_admin
 from app.services.auth_services import AuthService
-from app.services.user_services import UserService
 from app.schemas.user_schema import UserCreate, UserResponse
-from app.schemas.auth_schema import RefreshTokenSchema, LogoutSchema, PasswordResetConfirmSchema, PasswordResetRequestSchema
+from app.schemas.auth_schema import RefreshTokenSchema, LogoutSchema, PasswordResetConfirmSchema, PasswordResetRequestSchema, VerifyEmailSchema
+
 
 auth_router = APIRouter()
 
@@ -15,7 +15,14 @@ async def register_user(
     data: UserCreate,
     db: AsyncSession = Depends(get_async_db)
 ):
-    return await UserService.create_user(db, data)
+    return await AuthService.register_user(db, data)
+
+@auth_router.post("/verify-email")
+async def verify_user_email(
+    data: VerifyEmailSchema,
+    db: AsyncSession = Depends(get_async_db)
+):
+    return await AuthService.verify_email(db, data)
 
 @auth_router.post("/login")
 async def login(
@@ -46,23 +53,17 @@ async def refresh_token(
 
 @auth_router.post("/logout")
 async def logout(
-    data: LogoutSchema,
-    db: AsyncSession = Depends(get_async_db)
+    db: AsyncSession = Depends(get_async_db),
+    current_user = Depends(auth_get_current_user)
 ):
-    return await AuthService.logout(
-        db=db,
-        refresh_token_str=data.refresh_token
-    )
+    return await AuthService.logout(db, current_user)
 
 @auth_router.post("/logout-all")
 async def logout_all(
     db: AsyncSession = Depends(get_async_db),
-    current_user = Depends(auth_require_admin)
+    current_user = Depends(auth_get_current_user)
 ):
-    return await AuthService.logout_all(
-        db=db,
-        user_id=current_user.id
-    )
+    return await AuthService.logout_all(db, current_user)
 
 @auth_router.post("/password-reset/request")
 async def password_reset_request(

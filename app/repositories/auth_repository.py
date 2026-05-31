@@ -1,3 +1,4 @@
+from uuid import UUID
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func
 from app.models.auth_model import RefreshToken
@@ -25,7 +26,7 @@ class AuthRepository:
         return token
     
     @staticmethod
-    async def revoke_all_user_tokens(db: AsyncSession, user_id):
+    async def revoke_all_user_tokens(db: AsyncSession, user_id: UUID):
         stmt = select(RefreshToken).where(RefreshToken.user_id == user_id)
         result = await db.execute(stmt)
         tokens = result.scalars().all()

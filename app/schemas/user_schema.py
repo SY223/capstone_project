@@ -32,6 +32,13 @@ class UserResponse(UserBase):
     created_at: datetime
     updated_at: Optional[datetime] = None
     model_config = ConfigDict(from_attributes=True)
+    
+class UserRead(UserBase):
+    id: UUID
+    is_active: bool
+    created_at: datetime
+    updated_at: Optional[datetime] = None
+    model_config = ConfigDict(from_attributes=True)
 
 class UserUpdate(BaseModel):
     full_name: Optional[str] = None 

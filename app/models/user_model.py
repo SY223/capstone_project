@@ -40,6 +40,10 @@ class User(Base):
     reset_token:Mapped[Optional[str]] = mapped_column(String, nullable=True)
     reset_token_expiry:Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
     refresh_tokens: Mapped[List["RefreshToken"]] = relationship("RefreshToken", back_populates="user", lazy="selectin")
+    #For user verification
+    is_verified:Mapped[bool]  = mapped_column(Boolean, default=False)
+    verification_code: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    verification_expires_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
 
 
     @property

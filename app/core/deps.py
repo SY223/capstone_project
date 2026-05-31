@@ -1,3 +1,4 @@
+import random
 from fastapi.security import OAuth2PasswordBearer
 from app.core.config import settings
 from jose import jwt, JWTError
@@ -76,3 +77,6 @@ async def auth_require_teacher_or_admin(current_user = Depends(auth_get_current_
             detail="Teacher or admin access required"
         )
     return current_user
+
+def generate_verification_code():
+    return f"{random.randint(100000, 999999)}"
