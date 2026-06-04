@@ -19,7 +19,6 @@ async def send_email_365_async(
             server.starttls()
             server.login(settings.M365_EMAIL, settings.M365_APP_PASSWORD)
             server.sendmail(settings.M365_EMAIL, [to_email], msg.as_string())
-    
     await asyncio.to_thread(_send)
 
 

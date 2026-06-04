@@ -1,10 +1,24 @@
+import sentry_sdk
+from sentry_sdk.integrations.fastapi import FastApiIntegration
+from sentry_sdk.integrations.sqlalchemy import SqlalchemyIntegration
 from fastapi import FastAPI, Request, Response
 from app.api.v1.users import user_router
 from app.api.v1.auth import auth_router
 from app.api.v1.courses import course_router
 from app.api.v1.enrollments import enrollment_router
 from fastapi.middleware.cors import CORSMiddleware
+from app.core.config import settings
 
+if settings.SENTRY_DSN:
+    sentry_sdk.init(
+        dsn=settings.SENTRY_DSN,
+        integrations=[
+            FastApiIntegration(),
+            SqlalchemyIntegration(),
+        ],
+        traces_sample_rate=1.0, #In production this should be 0.1
+        profiles_sample_rate=1.0
+    )
 
 app = FastAPI()
 
@@ -25,7 +39,7 @@ async def add_security_headers(request: Request, call_next):
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=settings.CORS_ORIGINS,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -36,11 +50,15 @@ app.include_router(user_router, prefix="/api/v1/users", tags=["User Routes"])
 app.include_router(course_router, prefix="/api/v1/courses", tags=["Course Routes"])
 app.include_router(enrollment_router, prefix="/api/v1/enrollments", tags=["Enrollment Routes"])
 
-app.get("/")
+@app.get("/")
 def root():
     return {
         "message": "A mini social feed API working perfectly!"
     }
+    
+@app.get("/sentry-test")
+async def sentry_test():
+    division_by_zero = 1/0
 
 
 

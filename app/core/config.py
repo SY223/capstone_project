@@ -4,16 +4,20 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 class Settings(BaseSettings):
     PROJECT_NAME: str = "Enrollment API"
     API_V1_PREFIX: str = "/api/v1"
-    ENVIRONMENT: str = ""
+    ENVIRONMENT: str | None = None
+    CORS_ORIGINS: list[str] = [
+        "http://localhost:3000"
+    ]
 
     JWT_SECRET_KEY: str = ""
     JWT_REFRESH_SECRET: str = ""
     ALGORITHM: str = ""
-    ACCESS_TOKEN_EXPIRE_MINUTES: int
+    ACCESS_TOKEN_EXPIRE_MINUTES: int 
     REFRESH_TOKEN_EXPIRE_DAYS: int
     RESET_CODE_EXPIRY_MINUTES: int
     REDIS_BROKER: str = ""
-    REDIS_BACKEND: str= ""
+    REDIS_BACKEND: str = ""
+    SENTRY_DSN: str = ""
 
     M365_SMTP_HOST: str = ""
     M365_SMTP_PORT: int

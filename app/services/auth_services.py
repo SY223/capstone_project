@@ -1,4 +1,4 @@
-from uuid import UUID
+from sentry_sdk import capture_exception
 from fastapi import HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.exc import IntegrityError
@@ -49,7 +49,10 @@ class AuthService:
                 detail="A user with this email address already exists."
             )
         #Details that goes to client
-        send_verification_email_task.delay(user.email, user.full_name, code)
+        try:
+            send_verification_email_task.delay(user.email, user.full_name, code)
+        except Exception as e:
+            capture_exception(e)
         return {
             "message": "Your email verification code sent"
         }
@@ -191,8 +194,10 @@ class AuthService:
         await AuthRepository.set_reset_code(db, user, code, expiry)
         await db.commit()
         #Details that goes to client
-        send_password_reset_email_task.delay(user.email, user.full_name, code)
-
+        try:
+            send_password_reset_email_task.delay(user.email, user.full_name, code)
+        except Exception as e:
+            capture_exception(e)
         return {
             "message": "if this email exists, a reset code has been sent."
         }

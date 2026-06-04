@@ -1,5 +1,15 @@
 from celery import Celery
+import sentry_sdk
+from sentry_sdk.integrations.celery import CeleryIntegration
 from app.core.config import settings
+
+if settings.SENTRY_DSN:
+    sentry_sdk.init(
+        dsn=settings.SENTRY_DSN,
+        integrations=[CeleryIntegration],
+        traces_sample_rate=1.0
+    )
+
 
 celery_app = Celery(
     "tasks",
