@@ -2,7 +2,7 @@ import uuid
 from datetime import datetime
 from typing import Optional, List, TYPE_CHECKING
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from sqlalchemy import String, Integer, Boolean, DateTime, ForeignKey, func
+from sqlalchemy import CheckConstraint, String, Integer, Boolean, DateTime, ForeignKey, UniqueConstraint, func
 from sqlalchemy.dialects.postgresql import UUID as PGUUID
 from app.core.db_async import Base
 
@@ -33,4 +33,9 @@ class Course(Base):
         secondaryjoin="User.id == Enrollment.user_id",
         viewonly=True,
         lazy="selectin"
+    )
+        # DB‑level constraints
+    __table_args__ = (
+        UniqueConstraint("code", name="uq_course_code"),
+        CheckConstraint("capacity > 0", name="check_capacity_positive"),
     )

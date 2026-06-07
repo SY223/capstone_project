@@ -1,17 +1,20 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Request
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.deps import get_async_db, auth_get_current_user, auth_require_admin
+from app.core.deps import get_async_db, auth_get_current_user
 from app.services.auth_services import AuthService
 from app.schemas.user_schema import UserCreate, UserResponse
 from app.schemas.auth_schema import RefreshTokenSchema, LogoutSchema, PasswordResetConfirmSchema, PasswordResetRequestSchema, VerifyEmailSchema
+from app.core.rate_limiter import limiter
 
 
 auth_router = APIRouter()
 
 @auth_router.post("/register")
+@limiter.limit("5/minute")
 async def register_user(
+    request: Request,
     data: UserCreate,
     db: AsyncSession = Depends(get_async_db)
 ):
@@ -25,7 +28,9 @@ async def verify_user_email(
     return await AuthService.verify_email(db, data)
 
 @auth_router.post("/login")
+@limiter.limit("5/minute")
 async def login(
+    request: Request,
     form_data: OAuth2PasswordRequestForm = Depends(),
     db: AsyncSession = Depends(get_async_db)
 ):
@@ -66,7 +71,9 @@ async def logout_all(
     return await AuthService.logout_all(db, current_user)
 
 @auth_router.post("/password-reset/request")
+@limiter.limit("5/minute")
 async def password_reset_request(
+    request: Request,
     data: PasswordResetRequestSchema,
     db: AsyncSession = Depends(get_async_db)
 ):

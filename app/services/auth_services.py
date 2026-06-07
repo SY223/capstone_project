@@ -13,13 +13,15 @@ from app.core.security import (
     create_access_token,
     create_refresh_token
 )
-from app.models.user_model import User, UserRole
+from app.models.user_model import User
+from app.core.enums import UserRole
 from app.repositories.user_repository import UserRepository
 from app.repositories.auth_repository import AuthRepository
 from app.models.auth_model import RefreshToken
 from app.core.config import settings
 from app.schemas.auth_schema import VerifyEmailSchema
 from app.schemas.user_schema import UserCreate
+from app.core.logging_config import logger
 
 
 class AuthService:
@@ -48,13 +50,12 @@ class AuthService:
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="A user with this email address already exists."
             )
-        #Details that goes to client
         try:
             send_verification_email_task.delay(user.email, user.full_name, code)
         except Exception as e:
-            capture_exception(e)
+            capture_exception(e) 
         return {
-            "message": "Your email verification code sent"
+            "message": "Your email verification code generated and logged"
         }
 
     @staticmethod
@@ -112,6 +113,11 @@ class AuthService:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Email not verified. Please verify your email to continue"
+            )
+        if not user.is_active:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Login failed. This account has been deactivated."
             )
         access_token = create_access_token(
             {"sub": str(user.id),"role": user.role}
@@ -197,7 +203,7 @@ class AuthService:
         try:
             send_password_reset_email_task.delay(user.email, user.full_name, code)
         except Exception as e:
-            capture_exception(e)
+            capture_exception(e)   
         return {
             "message": "if this email exists, a reset code has been sent."
         }

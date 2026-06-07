@@ -1,5 +1,5 @@
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.orm import selectinload
 from uuid import UUID
 from app.models.course_model import Course
@@ -12,6 +12,20 @@ class EnrollmentRepository:
         db.add(enrollment)
         await db.flush()
         return enrollment
+    #Student Count Total Enrollment
+    @staticmethod
+    async def count_by_user(db: AsyncSession, user_id: UUID) -> int:
+        result = await db.execute(
+            select(func.count(Enrollment.id))
+            .where(Enrollment.user_id == user_id)
+        )
+        return result.scalar_one()
+    
+    #Admin Count Total Enrollment
+    @staticmethod
+    async def admin_count_all(db: AsyncSession) -> int:
+        result = await db.execute(select(func.count(Enrollment.id)))
+        return result.scalar_one()
     
     #GET an enrollment by its ID
     @staticmethod
@@ -40,7 +54,12 @@ class EnrollmentRepository:
 
     #List all enrollments of a user
     @staticmethod
-    async def list_by_user(db: AsyncSession, user_id: UUID):
+    async def list_by_user(
+        db: AsyncSession, 
+        user_id: UUID,
+        skip: int = 0,
+        limit: int = 20
+    ):
         result = await db.execute(
             select(Enrollment)
             .where(Enrollment.user_id == user_id)
@@ -48,18 +67,26 @@ class EnrollmentRepository:
                 selectinload(Enrollment.course),
                 selectinload(Enrollment.student)
             )
+            .offset(skip)
+            .limit(limit)
         )
         return result.scalars().all()
 
     #Admin GET all enrollments
     @staticmethod
-    async def admin_list_all(db: AsyncSession):
+    async def admin_list_all(
+        db: AsyncSession,
+        skip: int = 0,
+        limit: int = 20
+    ):
         result = await db.execute(
             select(Enrollment)
             .options(
                 selectinload(Enrollment.student),
                 selectinload(Enrollment.course)
             )
+            .offset(skip)
+            .limit(limit)
         )
         return result.scalars().all()
 

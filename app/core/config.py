@@ -25,6 +25,7 @@ class Settings(BaseSettings):
     M365_APP_PASSWORD: str = ""
     POSTMARK_SERVER_TOKEN: str = ""
     POSTMARK_FROM_EMAIL: str = ""
+    SEND_EMAILS: bool = False
 
 
     DATABASE_URL_ASYNC: str = ""

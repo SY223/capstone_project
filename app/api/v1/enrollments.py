@@ -2,7 +2,7 @@ from uuid import UUID
 from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.deps import auth_get_current_user, get_async_db
-from app.schemas.enrollment_schema import EnrollmentCreate, EnrollmentAdminDetails, TeacherCourseEnrollmentSummary
+from app.schemas.enrollment_schema import EnrollmentCreate, TeacherCourseEnrollmentSummary, PaginatedAdminEnrollmentResponse, PaginatedStudentEnrollmentResponse
 from app.services.enrollment_services import EnrollmentService
 
 
@@ -18,28 +18,35 @@ async def enroll_student(
     return await EnrollmentService.enroll_student(db, data, current_user)
 
 #STUDENT GET their enrollment lists
-@enrollment_router.get("/me")
+@enrollment_router.get("/me", response_model=PaginatedStudentEnrollmentResponse)
 async def get_my_enrollments(
+    page: int = 1,
+    limit: int = 20,
     db: AsyncSession = Depends(get_async_db),
     current_user = Depends(auth_get_current_user)
 ):
-    return await EnrollmentService.list_student_enrollments(db, current_user)
+    return await EnrollmentService.list_student_enrollments(db, current_user, page, limit)
 
 #ADMIN GET all enrollments
-@enrollment_router.get("/admin/all", response_model=list[EnrollmentAdminDetails])
+@enrollment_router.get("/admin/all", response_model=PaginatedAdminEnrollmentResponse)
 async def admin_get_all_enrollments(
+    page: int = 1,
+    limit: int = 20,
     db: AsyncSession = Depends(get_async_db),
     current_user = Depends(auth_get_current_user)
 ):
-    return await EnrollmentService.admin_list_all_enrollments(db, current_user)
+    return await EnrollmentService.admin_list_all_enrollments(db, current_user, page, limit)
 
-#TEACHER GET all enrollments per course
-@enrollment_router.get("/teacher/my-courses", response_model=list[TeacherCourseEnrollmentSummary])
-async def teacher_get_course_enrollments(
+#TEACHER and ADMIN GET all enrollments per course
+@enrollment_router.get("/{course_id}", response_model=PaginatedAdminEnrollmentResponse)
+async def teacher_admin_get_course_enrollments(
+    course_id: UUID,
+    page: int = 1,
+    limit: int = 20,
     db: AsyncSession = Depends(get_async_db),
     current_user = Depends(auth_get_current_user)
 ):
-    return await EnrollmentService.teacher_list_course_enrollments(db, current_user)
+    return await EnrollmentService.teacher_admin_list_course_enrollments(db, current_user, course_id, page, limit)
 
 #STUDENT deregister from a course
 @enrollment_router.delete("/{enrollment_id}")

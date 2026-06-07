@@ -4,7 +4,7 @@ from uuid import UUID
 from app.repositories.enrollment_repository import EnrollmentRepository
 from app.repositories.course_repository import CourseRepository
 from app.schemas.enrollment_schema import EnrollmentCreate, EnrollmentResponse, EnrollmentDetails, EnrollmentAdminDetails, TeacherCourseEnrollmentSummary
-from app.models.user_model import UserRole
+from app.core.enums import UserRole
 
 class EnrollmentService:
     @staticmethod
@@ -59,20 +59,24 @@ class EnrollmentService:
     @staticmethod
     async def list_student_enrollments(
         db: AsyncSession,
-        current_user
+        current_user,
+        page: int = 1,
+        limit: int = 20
     ):
         if current_user.role != UserRole.student:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="Only students can view their enrollments"
             )
-        enrollments = await EnrollmentRepository.list_by_user(db, current_user.id)
+        skip = (page-1) * limit
+        enrollments = await EnrollmentRepository.list_by_user(db, user_id=current_user.id, skip=skip, limit=limit)
+        total = await EnrollmentRepository.count_by_user(db, current_user.id)
         if not enrollments:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="You are not enrolled in any courses"
             )
-        return [
+        items = [
             EnrollmentDetails(
                 id=e.id,
                 course_id=e.course.id,
@@ -82,24 +86,35 @@ class EnrollmentService:
             )
             for e in enrollments
         ]
+        return {
+            "total": total,
+            "page": page,
+            "limit": limit,
+            "items": items
+        }
     #ADMIN list all enrollments
     @staticmethod
     async def admin_list_all_enrollments(
         db: AsyncSession,
-        current_user
+        current_user,
+        page: int = 1,
+        limit: int = 20
     ):
+        
         if current_user.role != UserRole.admin:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="Only admin can view all enrollments"
             )
-        enrollments = await EnrollmentRepository.admin_list_all(db)
+        skip = (page-1) * limit
+        enrollments = await EnrollmentRepository.admin_list_all(db, skip=skip, limit=limit)
+        total = await EnrollmentRepository.admin_count_all(db)
         if not enrollments:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="No enrollments found"
             )
-        return [
+        items = [
             EnrollmentAdminDetails(
                 id=e.id,
                 student_id=e.student.id,
@@ -111,42 +126,66 @@ class EnrollmentService:
             )
             for e in enrollments
         ]
+        return {
+            "total": total,
+            "page": page,
+            "limit": limit,
+            "items": items
+        }
 
 
-    #Teacher list all enrollments per course
+    #TEACHER or ADMIN list all enrollments per course
     @staticmethod
-    async def teacher_list_course_enrollments(
+    async def teacher_admin_list_course_enrollments(
         db: AsyncSession,
-        current_user
+        current_user,
+        course_id: UUID,
+        page: int = 1,
+        limit: int = 20
     ):
-        if current_user.role != UserRole.teacher:
+        if current_user.role not in [UserRole.teacher, UserRole.admin]:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
-                detail="Only teachers can view enrollments on their courses"
+                detail="You are not authorized to view enrollments"
             )
-        courses = await CourseRepository.list_courses_with_enrollments_for_teacher(
-            db, current_user.id
-        )
-        if not courses:
+        skip = (page-1) * limit
+        course = None
+        if current_user.role == UserRole.admin:
+            course = await CourseRepository.get_course_with_enrollments_for_admin(
+                db, course_id=course_id
+            )
+        elif current_user.role == UserRole.teacher:
+            course = await CourseRepository.get_course_with_enrollments_for_teacher(
+                db, course_id=course_id, teacher_id=current_user.id
+            )
+        if not course:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
-                detail="You have not created any courses"
+                detail="Course not found or you do not have permission to view it."
             )
-        summaries = []
-        for course in courses:
-            total_enrolled = len(course.enrollments)
-            capacity_left = course.capacity
-
-            summaries.append(
-                TeacherCourseEnrollmentSummary(
-                    course_id=course.id,
-                    title=course.title,
-                    code=course.code,
-                    total_enrolled=total_enrolled,
-                    capacity_left=capacity_left
-                )
-            )
-        return summaries
+        all_enrollments = course.enrollments
+        total = len(all_enrollments)
+        paginated_enrollments = all_enrollments[skip : skip + limit]
+        
+        items = [
+            {
+                "id": e.id,
+                "student_id": e.student.id,
+                "student_email": e.student.email,
+                "course_id": course.id,
+                "course_title": course.title,
+                "course_code": course.code,
+                "enrolled_on": e.created_at
+            }
+            for e in paginated_enrollments
+        ]
+        
+        return {
+            "total": total,
+            "page": page,
+            "limit": limit,
+            "items": items
+        }
 
     #Student deregister from a course
     @staticmethod

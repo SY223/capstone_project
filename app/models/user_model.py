@@ -5,7 +5,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy import String, Boolean, DateTime, Enum as SAEnum, func
 from sqlalchemy.dialects.postgresql import UUID as PGUUID
 from app.core.db_async import Base
-from enum import Enum
+from app.core.enums import UserRole
 
 
 if TYPE_CHECKING:
@@ -15,12 +15,6 @@ if TYPE_CHECKING:
 
 
 
-
-
-class UserRole(str, Enum):
-    student = "student"
-    teacher = "teacher"
-    admin = "admin"
 
 class User(Base):
     __tablename__ = "users"

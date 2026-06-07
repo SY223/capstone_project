@@ -1,9 +1,9 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 from fastapi import HTTPException, status
 from sqlalchemy.exc import IntegrityError
-from app.models.user_model import User, UserRole
+from app.core.enums import UserRole
 from app.repositories.user_repository import UserRepository
-from app.schemas.user_schema import  UserUpdate, UserRead
+from app.schemas.user_schema import UserAdminDetailResponse, UserUpdate, UserRead
 from app.core.cache import cache_delete_pattern, cache_get, cache_set
 from app.core.security import hash_password
 from uuid import UUID
@@ -14,7 +14,7 @@ class UserService:
     @staticmethod
     async def get_user_by_id(db: AsyncSession, user_id: UUID, current_user):
         if current_user.role != UserRole.admin:
-            HTTPException(
+            raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="Only admin can perform this action"
             )
@@ -41,19 +41,75 @@ class UserService:
         await cache_set(key, user_dict, ttl=300)
         return user_dict
     
+    #ADMIN LIST ACTIVE USERS
     @staticmethod
-    async def list_all_users(db: AsyncSession, current_user):
+    async def admin_list_all_active_users(
+        db: AsyncSession,
+        current_user,
+        page: int = 1, 
+        limit: int = 20
+    ):
         if current_user.role != UserRole.admin:
-            HTTPException(
+            raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="Only admin can perform this action"
             )
-        return await UserRepository.list_all_users(db)
-
+        skip = (page - 1) * limit
+        paginated_users = await UserRepository.list_active_users_paginated(db, skip, limit)
+        total = await UserRepository.count_active_users(db)
+        if not paginated_users:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="No user found"
+            )
+        items = [
+            UserAdminDetailResponse.model_validate(user).model_dump(mode="json")
+            for user in paginated_users
+        ]
+        return {
+            "total": total,
+            "page": page,
+            "limit": limit,
+            "items": items
+        }
+    
+    #ADMIN LIST INACTIVE USERS
+    @staticmethod
+    async def admin_list_all_inactive_users(
+        db: AsyncSession,
+        current_user,
+        page: int = 1, 
+        limit: int = 20
+    ):
+        if current_user.role != UserRole.admin:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Only admin can perform this action"
+            )
+        skip = (page - 1) * limit
+        paginated_users = await UserRepository.list_inactive_users_paginated(db, skip, limit)
+        total = await UserRepository.count_inactive_users(db)
+        if not paginated_users:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="No user found"
+            )
+        items = [
+            UserAdminDetailResponse.model_validate(user).model_dump(mode="json")
+            for user in paginated_users
+        ]
+        return {
+            "total": total,
+            "page": page,
+            "limit": limit,
+            "items": items
+        }
+        
+        
     @staticmethod
     async def update_user(db: AsyncSession, user_id: UUID, data: UserUpdate, current_user):
         if current_user.role != UserRole.admin:
-            HTTPException(
+            raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="Only admin can update user"
             )
@@ -87,11 +143,16 @@ class UserService:
     @staticmethod
     async def delete_user(db: AsyncSession, user_id: UUID, current_user):
         if current_user.role != UserRole.admin:
-            HTTPException(
+            raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="Only admin can perform this action"
             )
-        user = await UserService.get_user_by_id(db, user_id, current_user)
+        user = await UserRepository.get_user_by_id(db, user_id)
+        if not user:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="User not found"
+            )
         try:
             await UserRepository.delete_user(db, user)
             await db.commit()

@@ -20,28 +20,24 @@ async def create_course(
 ):
     return await CourseService.create_course(db, data, current_user)
 
-# Teacher, Admin, Student Retrieve all active courses
+# Public Retrieve all active courses
 @course_router.get("/", response_model=PaginatedResult[CourseResponse])
 async def list_courses(
-    db: AsyncSession = Depends(get_async_db),
-    current_user = Depends(auth_get_current_user)
+    page: int = 0,
+    limit: int = 20,
+    db: AsyncSession = Depends(get_async_db)
 ):
-    return await CourseService.list_all_courses(db, current_user)
+    return await CourseService.public_list_all_courses(db, page, limit)
 
 #Admin retrieve all courses with inactive courses
 @course_router.get("/admin/all", response_model=PaginatedResult[CourseResponse])
 async def admin_list_all_courses(
-    skip: int = 0,
-    limit: int = 10,
+    page: int = 0,
+    limit: int = 20,
     db: AsyncSession = Depends(get_async_db),
     current_user = Depends(auth_get_current_user)
 ):
-    return await CourseService.admin_list_all_courses(
-        db=db,
-        current_user=current_user,
-        skip=skip,
-        limit=limit
-    )
+    return await CourseService.admin_list_all_courses(db, current_user, page, limit)
 
 #Teacher fully replace active courses: PUT
 @course_router.put("/{course_id}", response_model=CourseResponse)

@@ -20,7 +20,7 @@ async def cache_get(key: str) -> dict | None:
 
 async def cache_set(key: str, value: dict, ttl: int = 60) -> None:
     redis = await get_redis()
-    await redis.setex(key, ttl, json.dumps(value))
+    await redis.set(key, json.dumps(value), ex=ttl)
 
 
 async def cache_delete(key: str) -> None:

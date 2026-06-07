@@ -9,7 +9,7 @@ class EnrollmentBase(BaseModel):
     user_id: UUID
     course_id: UUID
 
-class EnrollmentCreate(EnrollmentBase):
+class EnrollmentCreate(BaseModel):
     course_id: UUID
 
 class EnrollmentResponse(EnrollmentBase):
@@ -47,5 +47,18 @@ class TeacherCourseEnrollmentSummary(BaseModel):
     code: str
     capacity_left: int
     total_enrolled: int
+    enrolled_on: datetime
 
     model_config = ConfigDict(from_attributes=True)
+
+class PaginatedAdminEnrollmentResponse(BaseModel):
+    total: int
+    page: int
+    limit: int
+    items: list[EnrollmentAdminDetails]
+    
+class PaginatedStudentEnrollmentResponse(BaseModel):
+    total: int
+    page: int
+    limit: int
+    items: list[EnrollmentDetails]

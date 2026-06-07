@@ -7,7 +7,7 @@ from app.core.cache import cache_get, cache_set, cache_delete_pattern
 from app.repositories.course_repository import CourseRepository
 from app.schemas.course_schema import CourseCreate, CourseUpdate, CourseResponse, CoursePut, CoursePatch
 from app.schemas.pagination import PaginatedResult
-from app.models.user_model import UserRole
+from app.core.enums import UserRole
 
 class CourseService:
     @staticmethod
@@ -51,24 +51,21 @@ class CourseService:
         return CourseResponse.model_validate(course)
 
     @staticmethod
-    async def list_all_courses(
+    async def public_list_all_courses(
         db: AsyncSession,
-        current_user,
-        skip: int = 0, 
-        limit: int = 10
+        page: int = 0, 
+        limit: int = 20
     ):
-        if current_user.role not in (UserRole.admin, UserRole.teacher, UserRole.student):
-            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not authorised to list all courses")
-        cache_key = f"courses:{skip}:{limit}"
+        cache_key = f"courses:{page}:{limit}"
         cached = await cache_get(cache_key)
         if cached:
             return PaginatedResult[CourseResponse](
                 total=cached["total"],
-                skip=cached["skip"],
+                skip=cached["page"],
                 limit=cached["limit"],
                 items=[CourseResponse(**item) for item in cached["items"]]
             )
-        courses = await CourseRepository.list_all(db, skip, limit)
+        courses = await CourseRepository.list_all(db, page, limit)
         if courses["total"] == 0:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No active courses in database")
         items = [
@@ -77,14 +74,14 @@ class CourseService:
         ]
         result_dict = {
             "total": courses["total"],
-            "skip": skip,
+            "page": page,
             "limit": limit,
             "items": items
         }
         await cache_set(cache_key, result_dict, ttl=300)
         return PaginatedResult[CourseResponse](
             total=courses["total"],
-            skip=skip,
+            skip=page,
             limit=limit,
             items=[CourseResponse(**item) for item in items]
         )
@@ -94,15 +91,15 @@ class CourseService:
     async def admin_list_all_courses(
         db: AsyncSession,
         current_user,
-        skip: int = 0,
-        limit: int = 10
+        page: int = 0,
+        limit: int = 20
     ):
         if current_user.role != UserRole.admin:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="Only admin can view all courses"
             )
-        courses = await CourseRepository.list_all_admin(db, skip, limit)
+        courses = await CourseRepository.list_all_admin(db, page, limit)
         if courses["total"] == 0:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
@@ -110,7 +107,7 @@ class CourseService:
             )
         return PaginatedResult[CourseResponse](
             total=courses["total"],
-            skip=skip,
+            skip=page,
             limit=limit,
             items=[CourseResponse.model_validate(c) for c in courses["items"]]
         )

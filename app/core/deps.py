@@ -5,7 +5,7 @@ from jose import jwt, JWTError
 from app.core.db import SessionLocal
 from app.core.db_async import AsyncSessionLocal
 from sqlalchemy.ext.asyncio import AsyncSession
-from fastapi import Header, HTTPException, status, Depends
+from fastapi import Header, HTTPException, Request, status, Depends
 from app.models.user_model import UserRole
 from app.repositories.user_repository import UserRepository
 from uuid import UUID
@@ -36,9 +36,10 @@ async def auth_get_current_user(
         detail="Could not validate credentials",
         headers={"WWW-Authenticate": "Bearer"}
     )
+    payload = jwt.decode(token, settings.JWT_SECRET_KEY, algorithms=[settings.ALGORITHM])
+    user_id_str = payload.get("sub")
     try:
-        payload = jwt.decode(token, settings.JWT_SECRET_KEY, algorithms=[settings.ALGORITHM])
-        user_id = payload.get("sub")
+        user_id = UUID(user_id_str)
         if user_id is None:
             raise credentials_exception
     except JWTError:
@@ -80,3 +81,6 @@ async def auth_require_teacher_or_admin(current_user = Depends(auth_get_current_
 
 def generate_verification_code():
     return f"{random.randint(100000, 999999)}"
+
+def get_client_ip(request: Request) -> str:
+    return request.client.host if request.client else "unknown"

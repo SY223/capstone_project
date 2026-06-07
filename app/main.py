@@ -8,6 +8,18 @@ from app.api.v1.courses import course_router
 from app.api.v1.enrollments import enrollment_router
 from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import settings
+from app.core.logging_config import setup_logging, logger
+from app.core.middleware import TimingMiddleware
+from slowapi.errors import RateLimitExceeded
+from slowapi.middleware import SlowAPIMiddleware
+from app.core.rate_limiter import limiter
+from app.core.rate_limit_handler import rate_limit_handler
+
+
+
+
+
+setup_logging()
 
 if settings.SENTRY_DSN:
     sentry_sdk.init(
@@ -19,10 +31,14 @@ if settings.SENTRY_DSN:
         traces_sample_rate=1.0, #In production this should be 0.1
         profiles_sample_rate=1.0
     )
+    
+logger.info("FastAPI started successfully")
 
 app = FastAPI()
 
 #MIDDLEWARE
+app.add_middleware(TimingMiddleware)
+
 @app.middleware("http")
 async def add_security_headers(request: Request, call_next):
     response: Response = await call_next(request)
@@ -32,7 +48,6 @@ async def add_security_headers(request: Request, call_next):
     response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
     response.headers["Permissions-Policy"] = "geolocation=(), microphone=(), camera=()"
     response.headers["X-XSS-Protection"] = "1; mode=block"
-
     # Optional but recommended
     #response.headers["Content-Security-Policy"] = "default-src 'self';"
     return response
@@ -44,6 +59,10 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, rate_limit_handler)
+app.add_middleware(SlowAPIMiddleware)
 
 app.include_router(auth_router, prefix="/api/v1/auth", tags=["Authentication Routes"])
 app.include_router(user_router, prefix="/api/v1/users", tags=["User Routes"])

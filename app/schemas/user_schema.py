@@ -1,14 +1,17 @@
 from pydantic import BaseModel, ConfigDict, EmailStr, field_validator
-from typing import Literal, Optional
+from typing import List, Literal, Optional
 from datetime import datetime
-from enum import Enum
+from app.core.enums import UserRole
 from uuid import UUID
 
 
-class UserRole(str, Enum):
-    ADMIN = "admin"
-    TEACHER = "teacher"
-    STUDENT = "student"
+
+# class UserRole(str, Enum):
+#     ADMIN = "admin"
+#     TEACHER = "teacher"
+#     STUDENT = "student"
+
+
 
 class UserBase(BaseModel):
     full_name: str
@@ -55,4 +58,20 @@ class UserUpdate(BaseModel):
     def normalize_email(cls, value): 
         return value.strip().lower()
 
+class UserAdminDetailResponse(BaseModel):
+    id: UUID
+    email: EmailStr
+    full_name: str
+    role: UserRole
+    is_active: bool
+    is_verified: bool
+    created_at: datetime
+    updated_at: Optional[datetime] = None
+    model_config = ConfigDict(from_attributes=True)
 
+
+class PaginatedUserResponse(BaseModel):
+    total: int
+    page: int
+    limit: int
+    items: List[UserAdminDetailResponse]
