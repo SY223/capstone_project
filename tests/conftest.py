@@ -20,7 +20,6 @@ TEST_DATABASE_URL = (
 
 @pytest.fixture(scope="session")
 def event_loop():
-    """Overrides pytest-asyncio's loop handling to keep things uniform across extensions."""
     policy = asyncio.get_event_loop_policy()
     loop = policy.new_event_loop()
     yield loop
@@ -29,7 +28,6 @@ def event_loop():
 
 @pytest.fixture(scope="function")
 async def engine():
-    # Adding poolclass=NullPool prevents asyncpg from keeping loop-polluted connections open
     engine = create_async_engine(TEST_DATABASE_URL, future=True, poolclass=NullPool)
     yield engine
     await engine.dispose()

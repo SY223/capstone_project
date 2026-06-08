@@ -5,7 +5,7 @@ from uuid import UUID
 from app.core.deps import get_async_db
 from app.schemas.pagination import PaginatedResult
 from app.services.course_services import CourseService
-from app.schemas.course_schema import CourseCreate, CoursePut, CoursePatch, CourseResponse
+from app.schemas.course_schema import CourseCreate, CoursePut, CoursePatch, CourseResponse, CourseResponseUser
 from app.core.deps import auth_get_current_user
 
 
@@ -70,7 +70,7 @@ async def delete_course(
     return await CourseService.delete_course(db, course_id, current_user)
 
 #Admin deactivate course
-@course_router.patch("/{course_id}/deactivate")
+@course_router.patch("/{course_id}/deactivate", response_model=CourseResponseUser)
 async def deactivate_course(
     course_id: UUID,
     db: AsyncSession = Depends(get_async_db),
@@ -79,7 +79,7 @@ async def deactivate_course(
     return await CourseService.deactivate_course(db, course_id, current_user)
 
 #Admin Reactivate Course
-@course_router.patch("/{course_id}/reactivate")
+@course_router.patch("/{course_id}/reactivate", response_model=CourseResponseUser)
 async def reactivate_course(
     course_id: UUID,
     db: AsyncSession = Depends(get_async_db),

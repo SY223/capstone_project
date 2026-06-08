@@ -188,10 +188,7 @@ class CourseService:
         await CourseRepository.set_active_status(db, course, False)
         await db.commit()
         await db.refresh(course)
-
-        return {
-            "message": "Course deactivated successfully."
-        }
+        return course
 
     @staticmethod
     async def reactivate_course(
@@ -212,10 +209,7 @@ class CourseService:
         await CourseRepository.set_active_status(db, course, True)
         await db.commit()
         await db.refresh(course)
-
-        return {
-            "message": "Course reactivated successfully."
-        }
+        return course
 
 
 

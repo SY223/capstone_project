@@ -32,6 +32,13 @@ class CourseResponse(CourseBase):
     created_at: datetime
     updated_at: Optional[datetime] = None
     model_config = ConfigDict(from_attributes=True)
+    
+class CourseResponseUser(CourseBase):
+    id: UUID
+    is_active: bool = True
+    created_at: datetime
+    updated_at: Optional[datetime] = None
+    model_config = ConfigDict(from_attributes=True)
 
 
 class CoursePut(BaseModel):
