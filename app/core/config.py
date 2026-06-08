@@ -5,7 +5,7 @@ class Settings(BaseSettings):
     PROJECT_NAME: str = "Enrollment API"
     API_V1_PREFIX: str = "/api/v1"
     ENVIRONMENT: str | None = None
-    CORS_ORIGINS: list[str] = ["*"]
+    CORS_ORIGINS: list[str] = ["http://localhost:3000"]
 
     JWT_SECRET_KEY: str = ""
     JWT_REFRESH_SECRET: str = ""
