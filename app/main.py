@@ -34,7 +34,11 @@ if settings.SENTRY_DSN:
     
 logger.info("FastAPI started successfully")
 
-app = FastAPI()
+app = FastAPI(
+    title=settings.PROJECT_NAME,
+    description="This is the API documentation for the Enrollment system.",
+    version="1.0.0"
+)
 
 #MIDDLEWARE
 app.add_middleware(TimingMiddleware)
