@@ -28,13 +28,13 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
-      postgres_test:          # ADDED: ensure test DB is up before API starts
+      postgres_test:   
         condition: service_healthy
     volumes:
-      - .:/app  # hot-reload in dev; remove in production
+      - .:/app  
     command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
     networks:
-      - backend               # ADDED: ensure API can resolve postgres_test
+      - backend              
 
   db:
     image: postgres:16-alpine
@@ -50,7 +50,7 @@ services:
       timeout: 5s
       retries: 5
     networks:
-      - backend               # ADDED: unify network
+      - backend             
 
   redis:
     image: redis:7-alpine
@@ -90,5 +90,5 @@ volumes:
   redis_data:
 
 networks:
-  backend:                    # ADDED: fixes "undefined network backend" error
+  backend:                   
     driver: bridge
