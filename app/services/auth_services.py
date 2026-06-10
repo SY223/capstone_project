@@ -30,7 +30,7 @@ class AuthService:
         hashed_pw = hash_password(data.password)
 
         code = generate_verification_code()
-        expires = datetime.utcnow() + timedelta(settings.RESET_CODE_EXPIRY_MINUTES)
+        expires = datetime.now(timezone.utc) + timedelta(settings.RESET_CODE_EXPIRY_MINUTES)
         user = User(
             email=data.email,
             full_name=data.full_name,
@@ -81,7 +81,7 @@ class AuthService:
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="No active verification code. Please request a new one."
             )
-        if user.verification_expires_at < datetime.now():
+        if user.verification_expires_at < datetime.now(timezone.utc):
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Verification code expired"

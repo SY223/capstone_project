@@ -37,7 +37,7 @@ class User(Base):
     #For user verification
     is_verified:Mapped[bool]  = mapped_column(Boolean, default=False)
     verification_code: Mapped[Optional[str]] = mapped_column(String, nullable=True)
-    verification_expires_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
+    verification_expires_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
 
 
     @property

@@ -1,18 +1,27 @@
 from app.models.user_model import User
 from app.core.enums import UserRole
 from app.core.security import hash_password
+from app.core.deps import generate_verification_code
 from app.models.course_model import Course
 from sqlalchemy.ext.asyncio import AsyncSession
 from uuid import uuid4
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 
-async def create_user(db, *, email, role=UserRole.student, active=True):
+async def create_user(db, *, email, role=UserRole.student, is_active=True, is_verified=False, with_verification_code=True):
+    code = generate_verification_code() if with_verification_code else None
+    expires = (
+        datetime.now(timezone.utc) + timedelta(minutes=10)
+        if with_verification_code else None
+    )
     user = User(
         email=email,
         full_name="Test User",
         hashed_password=hash_password("password123"),
         role=role,
-        is_active=active
+        is_verified=is_verified,
+        verification_code=code,
+        verification_expires_at=expires,
+        is_active=is_active
     )
     db.add(user)
     await db.commit()
@@ -24,7 +33,7 @@ async def create_admin(db):
         db,
         email="admin@test.com",
         role=UserRole.admin,
-        active=True
+        is_active=True
     )
 
 async def create_teacher(db, email: str | None = None):

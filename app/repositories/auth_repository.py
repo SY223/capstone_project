@@ -8,11 +8,23 @@ from datetime import datetime, timezone
 
 class AuthRepository:
     @staticmethod
-    async def create_refresh_token(db: AsyncSession, token: RefreshToken):
-        db.add(token)
-        await db.flush()
-        return token
+    async def create_refresh_token(db: AsyncSession, refresh_token: RefreshToken):
+        existing = await db.execute(
+            select(RefreshToken).where(RefreshToken.user_id == refresh_token.user_id)
+        )
+        existing = existing.scalar_one_or_none()
 
+        if existing:
+            existing.token = refresh_token.token
+            existing.expires_at = refresh_token.expires_at
+            await db.flush()
+            return existing
+
+        db.add(refresh_token)
+        await db.flush()
+        return refresh_token
+    
+    
     @staticmethod
     async def get_refresh_token(db: AsyncSession, token_str: str):
         stmt = select(RefreshToken).where(RefreshToken.token == token_str)

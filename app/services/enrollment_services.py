@@ -242,6 +242,8 @@ class EnrollmentService:
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="Enrollment not found"
             )
+        student_id = enrollment.user_id
+        course_id = enrollment.course_id
         course = enrollment.course
         if not course:
             raise HTTPException(
@@ -254,8 +256,7 @@ class EnrollmentService:
         await db.refresh(course)
 
         return {
-            "message": "Student removed from course successfully",
-            "course_id": course.id,
-            "student_id": enrollment.user_id,
-            "capacity_left": course.capacity
+            "message": "Student removed successfully",
+            "student_id": student_id,
+            "course_id": course_id
         }

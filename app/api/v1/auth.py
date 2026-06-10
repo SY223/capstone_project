@@ -5,7 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.deps import get_async_db, auth_get_current_user
 from app.services.auth_services import AuthService
 from app.schemas.user_schema import UserCreate, UserResponse
-from app.schemas.auth_schema import RefreshTokenSchema, LogoutSchema, PasswordResetConfirmSchema, PasswordResetRequestSchema, VerifyEmailSchema
+from app.schemas.auth_schema import RefreshTokenSchema, PasswordResetConfirmSchema, PasswordResetRequestSchema, VerifyEmailSchema
 from app.core.rate_limiter import limiter
 
 

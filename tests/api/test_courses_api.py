@@ -27,6 +27,94 @@ async def test_teacher_can_create_course(client, db_session):
     assert data["code"] == "MAT101"
     assert data["capacity"] == 40
     
+@pytest.mark.asyncio
+async def test_teacher_cannot_delete_course(client, db_session):
+    teacher = await create_teacher(db_session)
+    course = await create_course(db_session, teacher_id=teacher.id)
+
+    token = create_test_token(teacher.id)
+
+    response = await client.delete(
+        f"/api/v1/courses/{course.id}",
+        headers={"Authorization": f"Bearer {token}"}
+    )
+    assert response.status_code == 403
+
+
+@pytest.mark.asyncio
+async def test_create_course_invalid_code(client, db_session):
+    teacher = await create_teacher(db_session)
+    token = create_test_token(teacher.id)
+
+    payload = {
+        "title": "Bad Code",
+        "code": "INVALID",
+        "capacity": 20
+    }
+
+    response = await client.post(
+        "/api/v1/courses/",
+        json=payload,
+        headers={"Authorization": f"Bearer {token}"}
+    )
+    assert response.status_code == 422
+
+@pytest.mark.asyncio
+async def test_create_course_missing_fields(client, db_session):
+    teacher = await create_teacher(db_session)
+    token = create_test_token(teacher.id)
+
+    payload = {
+        "title": "Missing Code"
+        # code missing
+    }
+
+    response = await client.post(
+        "/api/v1/courses/",
+        json=payload,
+        headers={"Authorization": f"Bearer {token}"}
+    )
+    assert response.status_code == 422
+
+@pytest.mark.asyncio
+async def test_list_courses_pagination(client, db_session):
+    teacher = await create_teacher(db_session)
+
+    for i in range(5):
+        await create_course(
+            db_session,
+            teacher_id=teacher.id,
+            title=f"Course {i}",
+            code=f"CRS{i}01"
+        )
+
+    response = await client.get("/api/v1/courses/?page=0&limit=2")
+
+    assert response.status_code == 200
+    data = response.json()
+    assert len(data["items"]) == 2
+    assert data["total"] == 5
+
+@pytest.mark.asyncio
+async def test_duplicate_course_code_fails(client, db_session):
+    teacher = await create_teacher(db_session)
+    token = create_test_token(teacher.id)
+
+    await create_course(db_session, teacher_id=teacher.id, code="DUP101")
+
+    payload = {
+        "title": "Another Course",
+        "code": "DUP101",
+        "capacity": 20
+    }
+
+    response = await client.post(
+        "/api/v1/courses/",
+        json=payload,
+        headers={"Authorization": f"Bearer {token}"}
+    )
+    assert response.status_code == 400
+
 
 @pytest.mark.asyncio
 async def test_student_cannot_create_course(client, db_session):
@@ -174,7 +262,8 @@ async def test_admin_can_reactivate_course(client, db_session):
     assert response.status_code == 200
     data = response.json()
     assert data["is_active"] is True
-    
+
+
 @pytest.mark.asyncio
 async def test_teacher_can_fully_replace_course(client, db_session):
     teacher = await create_teacher(db_session)
@@ -197,3 +286,5 @@ async def test_teacher_can_fully_replace_course(client, db_session):
     data = response.json()
     assert data["title"] == "replaced course"
     assert data["code"] == "NEW101"
+    
+
