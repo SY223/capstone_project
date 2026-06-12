@@ -76,7 +76,7 @@ app.include_router(enrollment_router, prefix="/api/v1/enrollments", tags=["Enrol
 @app.get("/")
 def root():
     return {
-        "message": "A mini social feed API working perfectly!"
+        "message": "Course Enrollment Platform API — providing secure authentication, role‑based access, course management, and student enrollment services."
     }
     
 @app.get("/sentry-test")
