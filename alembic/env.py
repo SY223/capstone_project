@@ -10,6 +10,7 @@ from app.core.db import Base
 from app.models.user_model import User
 from app.models.course_model import Course
 from app.models.enrollment_model import Enrollment
+from app.models.audit_model import AuditLog
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.

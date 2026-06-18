@@ -4,7 +4,10 @@
 This project implements a **real‑world course enrollment backend** using **FastAPI**, **PostgreSQL**, **SQLAlchemy**, **JWT authentication**, and **role‑based access control (RBAC)**.  
 It includes **complete API functionality**, **database migrations**, and a **comprehensive automated test suite**.
 
+---
 
+## 🚀 Live API (Render Deployment)
+Base URL: https://course-enrollment-api-m4iq.onrender.com
 
 ---
 

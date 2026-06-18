@@ -20,21 +20,21 @@ services:
   api:
     build: .
     ports:
-      - '8000:8000'
+      - "8000:8000"
     env_file:
-      - .env  
+      - .env
     depends_on:
       db:
         condition: service_healthy
       redis:
         condition: service_healthy
-      postgres_test:   
+      postgres_test:
         condition: service_healthy
     volumes:
-      - .:/app  
-    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+      - .:/app
+    command: sh -c "alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload" #uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
     networks:
-      - backend              
+      - backend
 
   db:
     image: postgres:16-alpine
@@ -42,27 +42,29 @@ services:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
       POSTGRES_DB: enrollment_db
+    ports:
+      - "${LOCAL_DB_PORT}:${CONTAINER_DB_PORT}"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ['CMD-SHELL', 'pg_isready -U postgres']
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
       interval: 5s
       timeout: 5s
       retries: 5
     networks:
-      - backend             
+      - backend
 
   redis:
     image: redis:7-alpine
     volumes:
       - redis_data:/data
     healthcheck:
-      test: ['CMD', 'redis-cli', 'ping']
+      test: ["CMD", "redis-cli", "ping"]
       interval: 5s
       timeout: 3s
       retries: 5
     networks:
-      - backend    
+      - backend
 
   celery_worker:
     build: .
@@ -73,7 +75,7 @@ services:
       - db
     command: celery -A app.celery_app.celery_app worker --loglevel=info
     networks:
-      - backend    
+      - backend
 
   celery_beat:
     build: .
@@ -83,12 +85,12 @@ services:
       - redis
     command: celery -A app.celery_app.celery_app beat --loglevel=info
     networks:
-      - backend    
+      - backend
 
 volumes:
   postgres_data:
   redis_data:
 
 networks:
-  backend:                   
+  backend:
     driver: bridge

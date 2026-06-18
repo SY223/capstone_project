@@ -2,8 +2,9 @@ from fastapi import HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from uuid import UUID
 from app.repositories.enrollment_repository import EnrollmentRepository
+from app.repositories.audit_repository import AuditLogRepository
 from app.repositories.course_repository import CourseRepository
-from app.schemas.enrollment_schema import EnrollmentCreate, EnrollmentResponse, EnrollmentDetails, EnrollmentAdminDetails, TeacherCourseEnrollmentSummary
+from app.schemas.enrollment_schema import EnrollmentCreate, EnrollmentResponse, EnrollmentDetails, EnrollmentAdminDetails
 from app.core.enums import UserRole
 
 class EnrollmentService:
@@ -44,7 +45,13 @@ class EnrollmentService:
         enrollment_dict = {"user_id": user_id, "course_id": course_id}
         enrollment = await EnrollmentRepository.create_enrollment(db, enrollment_dict)
         course.capacity -= 1
-
+        await AuditLogRepository.log(
+            db,
+            user_id=current_user.id,
+            action="ENROLL",
+            course_id=str(course.id),
+            enrollment_id=str(enrollment.id)
+        )
         await db.commit()
         await db.refresh(enrollment)
         await db.refresh(course)
@@ -216,6 +223,13 @@ class EnrollmentService:
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Cannot unenroll from an inactive course"
             )
+        await AuditLogRepository.log(
+            db,
+            user_id=current_user.id,
+            action="UNENROLL",
+            course_id=str(course.id),
+            enrollment_id=str(enrollment.id)
+        )
         await EnrollmentRepository.delete(db, enrollment)
         course.capacity += 1
         await db.commit()

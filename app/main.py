@@ -6,6 +6,7 @@ from app.api.v1.users import user_router
 from app.api.v1.auth import auth_router
 from app.api.v1.courses import course_router
 from app.api.v1.enrollments import enrollment_router
+from app.api.v1.audit import audit_router
 from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import settings
 from app.core.logging_config import setup_logging, logger
@@ -72,6 +73,7 @@ app.include_router(auth_router, prefix="/api/v1/auth", tags=["Authentication Rou
 app.include_router(user_router, prefix="/api/v1/users", tags=["User Routes"])
 app.include_router(course_router, prefix="/api/v1/courses", tags=["Course Routes"])
 app.include_router(enrollment_router, prefix="/api/v1/enrollments", tags=["Enrollment Routes"])
+app.include_router(audit_router, prefix="/api/v1/admin/audit-logs", tags=["Admin Audit Logs"])
 
 @app.get("/")
 def root():
