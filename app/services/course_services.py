@@ -16,8 +16,12 @@ class CourseService:
         data: CourseCreate,
         current_user
     ):
-        if current_user.role != UserRole.teacher:
-            raise HTTPException(status_code=403, detail="Only teachers can create courses")
+        allowed_roles = {
+            UserRole.teacher,
+            UserRole.admin,
+        }
+        if current_user.role not in allowed_roles:
+            raise HTTPException(status_code=403, detail="Only teacher or admin can create courses")
         existing = await CourseRepository.get_course_by_code(db, data.code)
         if existing:
             raise HTTPException(

@@ -1,40 +1,19 @@
-version: "3.9"
 
 services:
-  postgres_test:
-    image: postgres:15
-    container_name: postgres_test
-    environment:
-      POSTGRES_USER: test_user
-      POSTGRES_PASSWORD: test_password
-      POSTGRES_DB: test_db
-    ports:
-      - "5433:5432"
-    networks:
-      - backend
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U test_user"]
-      interval: 3s
-      timeout: 3s
-      retries: 5
   api:
     build: .
     ports:
-      - "8000:8000"
+      - '8000:8000'
     env_file:
-      - .env
+      - .env  
     depends_on:
       db:
         condition: service_healthy
       redis:
         condition: service_healthy
-      postgres_test:
-        condition: service_healthy
     volumes:
-      - .:/app
-    command: sh -c "alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload" #uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
-    networks:
-      - backend
+      - .:/app  # hot-reload in dev; remove in production
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
 
   db:
     image: postgres:16-alpine
@@ -42,29 +21,23 @@ services:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
       POSTGRES_DB: enrollment_db
-    ports:
-      - "${LOCAL_DB_PORT}:${CONTAINER_DB_PORT}"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      test: ['CMD-SHELL', 'pg_isready -U postgres']
       interval: 5s
       timeout: 5s
       retries: 5
-    networks:
-      - backend
 
   redis:
     image: redis:7-alpine
     volumes:
       - redis_data:/data
     healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
+      test: ['CMD', 'redis-cli', 'ping']
       interval: 5s
       timeout: 3s
       retries: 5
-    networks:
-      - backend
 
   celery_worker:
     build: .
@@ -74,8 +47,6 @@ services:
       - redis
       - db
     command: celery -A app.celery_app.celery_app worker --loglevel=info
-    networks:
-      - backend
 
   celery_beat:
     build: .
@@ -84,13 +55,7 @@ services:
     depends_on:
       - redis
     command: celery -A app.celery_app.celery_app beat --loglevel=info
-    networks:
-      - backend
 
 volumes:
   postgres_data:
   redis_data:
-
-networks:
-  backend:
-    driver: bridge

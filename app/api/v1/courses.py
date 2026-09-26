@@ -12,7 +12,7 @@ from app.core.rate_limiter import limiter
 
 course_router = APIRouter()
 
-# Teacher create courses
+# Teacher and Admin can create courses
 @course_router.post("/")
 @limiter.limit("10/minute")
 async def create_course(
