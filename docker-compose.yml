@@ -13,7 +13,7 @@ services:
         condition: service_healthy
     volumes:
       - .:/app  # hot-reload in dev; remove in production
-    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+    command: uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000}
 
   db:
     image: postgres:16-alpine
@@ -23,6 +23,8 @@ services:
       POSTGRES_DB: enrollment_db
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "${LOCAL_DB_PORT}:${CONTAINER_DB_PORT}"
     healthcheck:
       test: ['CMD-SHELL', 'pg_isready -U postgres']
       interval: 5s
