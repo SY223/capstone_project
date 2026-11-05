@@ -6,7 +6,11 @@ from app.core.config import settings
 
 DATABASE_URL = settings.DATABASE_URL_ASYNC
 
-engine = create_async_engine(DATABASE_URL, echo=True)
+engine = create_async_engine(
+    DATABASE_URL,
+    echo=settings.ENVIRONMENT == "DEBUG"
+)
+
 
 AsyncSessionLocal = async_sessionmaker(
     bind=engine,

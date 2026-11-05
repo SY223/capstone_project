@@ -10,15 +10,15 @@ class Settings(BaseSettings):
     JWT_SECRET_KEY: str = ""
     JWT_REFRESH_SECRET: str = ""
     ALGORITHM: str = ""
-    ACCESS_TOKEN_EXPIRE_MINUTES: int 
-    REFRESH_TOKEN_EXPIRE_DAYS: int
-    RESET_CODE_EXPIRY_MINUTES: int
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
+    REFRESH_TOKEN_EXPIRE_DAYS: int = 7
+    RESET_CODE_EXPIRY_MINUTES: int = 15
     REDIS_BROKER: str = ""
     REDIS_BACKEND: str = ""
     SENTRY_DSN: str = ""
 
     M365_SMTP_HOST: str = ""
-    M365_SMTP_PORT: int
+    M365_SMTP_PORT: int = 587
     M365_EMAIL: str = ""
     M365_APP_PASSWORD: str = ""
     POSTMARK_SERVER_TOKEN: str = ""

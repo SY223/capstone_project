@@ -41,6 +41,13 @@ app = FastAPI(
     version="1.0.0"
 )
 
+@app.get("/health", tags=["Health"])
+async def health_check():
+    return {
+        "status": "healthy",
+        "service": "course-enrollment-api"
+    }
+
 #MIDDLEWARE
 app.add_middleware(TimingMiddleware)
 

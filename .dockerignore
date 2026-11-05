@@ -1,0 +1,14 @@
+.venv/
+venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.mypy_cache/
+.git/
+.github/
+.env
+.env.*
+!.env.example
+.dev.vars
+node_modules/
+.wrangler/
