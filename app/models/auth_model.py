@@ -3,7 +3,7 @@ from sqlalchemy import String, Boolean, DateTime, ForeignKey, func
 from typing import TYPE_CHECKING
 from datetime import datetime
 import uuid
-from app.core.db import Base
+from app.core.base import Base
 
 if TYPE_CHECKING:
     from app.models.user_model import User

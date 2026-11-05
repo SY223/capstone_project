@@ -1,4 +1,4 @@
-from app.core.db import Base
+from app.core.base import Base
 
 from app.models.user_model import User
 from app.models.course_model import Course

@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING, Any, Dict, Optional
 from sqlalchemy import String, ForeignKey, DateTime, JSON
 from sqlalchemy.dialects.postgresql import UUID as PGUUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from app.core.db import Base
+from app.core.base import Base
 
 if TYPE_CHECKING:
     from app.models.user_model import User

@@ -4,7 +4,7 @@ from typing import Optional, List, TYPE_CHECKING
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy import String, Boolean, DateTime, Enum as SAEnum, func
 from sqlalchemy.dialects.postgresql import UUID as PGUUID
-from app.core.db_async import Base
+from app.core.base import Base
 from app.core.enums import UserRole
 
 

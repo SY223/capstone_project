@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy import DateTime, ForeignKey, func
 from sqlalchemy.dialects.postgresql import UUID as PGUUID
-from app.core.db_async import Base
+from app.core.base import Base
 
 
 if TYPE_CHECKING:
