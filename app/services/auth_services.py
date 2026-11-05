@@ -30,7 +30,7 @@ class AuthService:
         hashed_pw = hash_password(data.password)
 
         code = generate_verification_code()
-        expires = datetime.now(timezone.utc) + timedelta(settings.RESET_CODE_EXPIRY_MINUTES)
+        expires = datetime.now(timezone.utc) + timedelta(minutes=settings.RESET_CODE_EXPIRY_MINUTES)
         user = User(
             email=data.email,
             full_name=data.full_name,

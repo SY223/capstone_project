@@ -7,8 +7,11 @@ from app.core.base import Base
 
 DATABASE_URL = settings.DATABASE_URL
 
-if DATABASE_URL is None:
-    raise ValueError("DATABASE_URL is not set in environment variables or fallback!")
+if not DATABASE_URL or not DATABASE_URL.strip():
+    raise ValueError(
+        "DATABASE_URL is missing or empty. "
+        "Check the Railway DATABASE_URL environment variable."
+    )
 
 engine = create_engine(
     DATABASE_URL,
