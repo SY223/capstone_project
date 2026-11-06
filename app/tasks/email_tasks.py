@@ -24,6 +24,7 @@ def send_verification_email_task(self, to_email: str, full_name: str, code: str)
     try:
         send_email_resend_sync(to_email, subject, body)
         logger.info("Verification email successfully submitted to Resend")
+        return "Verification email submitted successfully"
     except Exception as exc:
         raise self.retry(exc=exc)
 
@@ -46,5 +47,6 @@ def send_password_reset_email_task(self, to_email: str, full_name: str, code: st
     try:
         send_email_resend_sync(to_email, subject, body)
         logger.info("Reset email successfully submitted to Resend")
+        return "Password reset verification email submitted successfully"
     except Exception as exc:
         raise self.retry(exc=exc)

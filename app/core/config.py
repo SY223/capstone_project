@@ -22,8 +22,6 @@ class Settings(BaseSettings):
     M365_EMAIL: str = ""
     M365_APP_PASSWORD: str = ""
 
-    POSTMARK_SERVER_TOKEN: str = ""
-    POSTMARK_FROM_EMAIL: str = ""
 
     # Resend email provider
     RESEND_API_KEY: str = ""

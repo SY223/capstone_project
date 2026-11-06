@@ -6,8 +6,8 @@ It includes **complete API functionality**, **database migrations**, and a **com
 
 ---
 
-## 🚀 Live API (Render Deployment)
-Base URL: https://course-enrollment-api-m4iq.onrender.com/docs
+## 🚀 Live API (Railway Deployment)
+Base URL: https://course-enrollment.up.railway.app/docs
 
 ---
 
