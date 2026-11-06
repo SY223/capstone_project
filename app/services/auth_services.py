@@ -4,7 +4,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.exc import IntegrityError
 from datetime import datetime, timedelta
 from datetime import datetime, timezone, timedelta
-from app.core.email_utils import send_email_365_async, send_email_postmark_async
+
 from app.core.deps import generate_verification_code
 from app.tasks.email_tasks import send_password_reset_email_task, send_verification_email_task
 from app.core.security import (
@@ -52,10 +52,22 @@ class AuthService:
             )
         try:
             send_verification_email_task.delay(user.email, user.full_name, code)
-        except Exception as e:
-            capture_exception(e) 
+        except Exception as exc:
+            capture_exception(exc)
+            logger.exception(
+                "Failed to queue verification email for user %s",
+                user.id
+            )
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail=(
+                    "Your account was created, but we could not send "
+                    "your verification email. Please try again later."
+                )
+            )
         return {
-            "message": "Your email verification code generated and logged"
+            "message": "Account created successfully. "
+                       "Please check your email for the verification code."
         }
 
     @staticmethod
@@ -95,6 +107,48 @@ class AuthService:
             "message": "Email verified successfully"
         }
 
+    @staticmethod
+    async def resend_verification_email(
+        db: AsyncSession,
+        email: str
+    ):
+        user = await UserRepository.get_user_by_email(db, email)
+        response = {
+            "message": "If this account requires verification, "
+                    "a verification code has been sent."
+        }
+
+        if not user or user.is_verified:
+            return response
+        code = generate_verification_code()
+        expiry = datetime.now(timezone.utc) + timedelta(
+            minutes=settings.RESET_CODE_EXPIRY_MINUTES
+        )
+
+        try:
+            user.verification_code = code
+            user.verification_expires_at = expiry
+
+            await db.commit()
+
+            send_verification_email_task.delay(
+                user.email,
+                user.full_name,
+                code
+            )
+        except Exception as exc:
+            await db.rollback()
+            capture_exception(exc)
+
+            logger.exception(
+                "Failed to process verification resend for user ID %s",
+                user.id
+            )
+
+        return {
+            "message": "If this account requires verification, "
+                    "a verification code has been sent."
+        }
 
 
     @staticmethod
@@ -191,22 +245,29 @@ class AuthService:
     @staticmethod
     async def request_password_reset(db: AsyncSession, email: str):
         user = await UserRepository.get_user_by_email(db, email)
-        if not user:
-            return {
-                "message": "If this email exists, a reset code has been sent."
-            }
-        code = generate_verification_code()
-        expiry = datetime.now(timezone.utc) + timedelta(settings.RESET_CODE_EXPIRY_MINUTES)
-        await AuthRepository.set_reset_code(db, user, code, expiry)
-        await db.commit()
-        #Details that goes to client
-        try:
-            send_password_reset_email_task.delay(user.email, user.full_name, code)
-        except Exception as e:
-            capture_exception(e)   
-        return {
-            "message": "if this email exists, a reset code has been sent."
+        response = {
+            "message": "If this email exists, a reset code has been sent."
         }
+        if not user:
+            return response
+        code = generate_verification_code()
+        expiry = datetime.now(timezone.utc) + timedelta(
+            minutes=settings.RESET_CODE_EXPIRY_MINUTES
+        )
+        try:
+            await AuthRepository.set_reset_code(db, user, code, expiry)
+            await db.commit()
+            send_password_reset_email_task.delay(user.email, user.full_name, code)
+        except Exception as exc:
+            await db.rollback()
+            capture_exception(exc)
+
+            logger.exception(
+                "Password reset request failed for user ID %s",
+                user.id
+            )
+
+        return response
 
     @staticmethod
     async def confirm_password_reset(db: AsyncSession, email: str, code: str, new_password: str):

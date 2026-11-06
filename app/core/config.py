@@ -21,8 +21,13 @@ class Settings(BaseSettings):
     M365_SMTP_PORT: int = 587
     M365_EMAIL: str = ""
     M365_APP_PASSWORD: str = ""
+
     POSTMARK_SERVER_TOKEN: str = ""
     POSTMARK_FROM_EMAIL: str = ""
+
+    # Resend email provider
+    RESEND_API_KEY: str = ""
+    RESEND_FROM_EMAIL: str = "noreply@ribbletrade.uk"
     SEND_EMAILS: bool = False
 
 

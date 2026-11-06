@@ -1,7 +1,7 @@
 import smtplib
 import asyncio
+import resend
 from email.mime.text import MIMEText
-from postmarker.core import PostmarkClient
 from app.core.config import settings
 
 async def send_email_365_async(
@@ -22,25 +22,18 @@ async def send_email_365_async(
     await asyncio.to_thread(_send)
 
 
-async def send_email_postmark_async(to_email: str, subject: str, body: str):
-    client = PostmarkClient(server_token=settings.POSTMARK_SERVER_TOKEN)
-    def _send():
-        client.emails.send(
-            From=settings.POSTMARK_FROM_EMAIL,
-            To=to_email,
-            Subject=subject,
-            TextBody=body
-        )
-    await asyncio.to_thread(_send)
-    
-def send_email_postmark_sync(to_email: str, subject: str, body: str):
-    client = PostmarkClient(
-        server_token=settings.POSTMARK_SERVER_TOKEN
-    )
-    return client.emails.send(
-        From=settings.POSTMARK_FROM_EMAIL,
-        To=to_email,
-        Subject=subject,
-        TextBody=body
-    )
+def send_email_resend_sync(
+    to_email: str,
+    subject: str,
+    body: str
+):
+    resend.api_key = settings.RESEND_API_KEY
 
+    params = {
+        "from": settings.RESEND_FROM_EMAIL,
+        "to": [to_email],
+        "subject": subject,
+        "text": body,
+    }
+
+    return resend.Emails.send(params)
